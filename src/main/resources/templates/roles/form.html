@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${isEdit ? 'Edit Role' : 'Create Role'}">Role Form</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>User Management System</h1>
+            <div class="user-info">
+                Logged in as: <strong sec:authentication="name">User</strong>
+            </div>
+        </div>
+
+        <div class="navigation">
+            <ul>
+                <li><a th:href="@{/home}">Home</a></li>
+                <li><a th:href="@{/users}">User Management</a></li>
+                <li><a th:href="@{/roles}">Role Management</a></li>
+                <li><a th:href="@{/test}">Test Page</a></li>
+                <li>
+                    <form th:action="@{/logout}" method="post" style="display: inline;">
+                        <button type="submit" class="btn btn-secondary btn-small">Logout</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+
+        <div class="content">
+            <div th:if="${errorMessage}" class="alert alert-error" th:text="${errorMessage}"></div>
+
+            <h2 th:text="${isEdit ? 'Edit Role' : 'Create New Role'}">Role Form</h2>
+
+            <form th:action="${isEdit ? '/roles/' + role.id : '/roles'}"
+                  th:object="${role}"
+                  method="post">
+
+                <div class="form-group">
+                    <label for="name">Role Name *</label>
+                    <input type="text"
+                           id="name"
+                           th:field="*{name}"
+                           class="form-control"
+                           placeholder="e.g., ROLE_ADMIN"
+                           required>
+                    <div class="form-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
+                    <small>Note: Role names should start with 'ROLE_'</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea id="description"
+                              th:field="*{description}"
+                              class="form-control"
+                              rows="3"
+                              placeholder="Enter role description"></textarea>
+                    <div class="form-error" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Save</button>
+                    <a th:href="@{/roles}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

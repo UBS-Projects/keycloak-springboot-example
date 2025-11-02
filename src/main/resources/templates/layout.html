@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle ?: 'User Management System'}">User Management</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>User Management System</h1>
+            <div class="user-info" sec:authorize="isAuthenticated()">
+                Logged in as: <strong sec:authentication="name">User</strong>
+            </div>
+        </div>
+
+        <div class="navigation" sec:authorize="isAuthenticated()">
+            <ul>
+                <li><a th:href="@{/home}">Home</a></li>
+                <li sec:authorize="hasRole('ADMIN')"><a th:href="@{/users}">User Management</a></li>
+                <li sec:authorize="hasRole('ADMIN')"><a th:href="@{/roles}">Role Management</a></li>
+                <li><a th:href="@{/test}">Test Page</a></li>
+                <li>
+                    <form th:action="@{/logout}" method="post" style="display: inline;">
+                        <button type="submit" class="btn btn-secondary btn-small">Logout</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+
+        <div class="content">
+            <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+            <div th:if="${errorMessage}" class="alert alert-error" th:text="${errorMessage}"></div>
+
+            <div th:replace="${content}">
+                <!-- Page content will be inserted here -->
+            </div>
+        </div>
+    </div>
+</body>
+</html>

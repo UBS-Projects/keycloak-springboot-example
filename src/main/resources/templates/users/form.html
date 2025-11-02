@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${isEdit ? 'Edit User' : 'Create User'}">User Form</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>User Management System</h1>
+            <div class="user-info">
+                Logged in as: <strong sec:authentication="name">User</strong>
+            </div>
+        </div>
+
+        <div class="navigation">
+            <ul>
+                <li><a th:href="@{/home}">Home</a></li>
+                <li><a th:href="@{/users}">User Management</a></li>
+                <li><a th:href="@{/roles}">Role Management</a></li>
+                <li><a th:href="@{/test}">Test Page</a></li>
+                <li>
+                    <form th:action="@{/logout}" method="post" style="display: inline;">
+                        <button type="submit" class="btn btn-secondary btn-small">Logout</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+
+        <div class="content">
+            <div th:if="${errorMessage}" class="alert alert-error" th:text="${errorMessage}"></div>
+
+            <h2 th:text="${isEdit ? 'Edit User' : 'Create New User'}">User Form</h2>
+
+            <form th:action="${isEdit ? '/users/' + user.id : '/users'}"
+                  th:object="${user}"
+                  method="post">
+
+                <div class="form-group">
+                    <label for="username">Username *</label>
+                    <input type="text"
+                           id="username"
+                           th:field="*{username}"
+                           class="form-control"
+                           required>
+                    <div class="form-error" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email *</label>
+                    <input type="email"
+                           id="email"
+                           th:field="*{email}"
+                           class="form-control"
+                           required>
+                    <div class="form-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password <span th:if="${isEdit}">(leave blank to keep current)</span></label>
+                    <input type="password"
+                           id="password"
+                           th:field="*{password}"
+                           class="form-control"
+                           th:required="${!isEdit}">
+                    <div class="form-error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="firstName">First Name</label>
+                    <input type="text"
+                           id="firstName"
+                           th:field="*{firstName}"
+                           class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="lastName">Last Name</label>
+                    <input type="text"
+                           id="lastName"
+                           th:field="*{lastName}"
+                           class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox"
+                               th:field="*{enabled}">
+                        Enabled
+                    </label>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Save</button>
+                    <a th:href="@{/users}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+
+            <div th:if="${isEdit}" class="mt-3">
+                <h3>Roles</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Role Name</th>
+                            <th>Description</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="role : ${user.roles}">
+                            <td th:text="${role.name}">ROLE_USER</td>
+                            <td th:text="${role.description}">Description</td>
+                            <td>
+                                <form th:action="@{/users/{userId}/roles/{roleId}/remove(userId=${user.id},roleId=${role.id})}"
+                                      method="post" style="display: inline;">
+                                    <button type="submit" class="btn btn-danger btn-small">Remove</button>
+                                </form>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h4 class="mt-3">Add Role</h4>
+                <div class="d-flex gap-2">
+                    <form th:each="role : ${roles}"
+                          th:if="${!user.roles.contains(role)}"
+                          th:action="@{/users/{userId}/roles/{roleId}/assign(userId=${user.id},roleId=${role.id})}"
+                          method="post"
+                          style="display: inline;">
+                        <button type="submit" class="btn btn-success btn-small" th:text="${role.name}">Role</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

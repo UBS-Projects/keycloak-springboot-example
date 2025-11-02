@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Role Management</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>User Management System</h1>
+            <div class="user-info">
+                Logged in as: <strong sec:authentication="name">User</strong>
+            </div>
+        </div>
+
+        <div class="navigation">
+            <ul>
+                <li><a th:href="@{/home}">Home</a></li>
+                <li><a th:href="@{/users}">User Management</a></li>
+                <li><a th:href="@{/roles}">Role Management</a></li>
+                <li><a th:href="@{/test}">Test Page</a></li>
+                <li>
+                    <form th:action="@{/logout}" method="post" style="display: inline;">
+                        <button type="submit" class="btn btn-secondary btn-small">Logout</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+
+        <div class="content">
+            <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+            <div th:if="${errorMessage}" class="alert alert-error" th:text="${errorMessage}"></div>
+
+            <div class="d-flex justify-content-between mb-3">
+                <h2>Roles</h2>
+                <a th:href="@{/roles/new}" class="btn btn-primary">Add New Role</a>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Created At</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="role : ${roles}">
+                        <td th:text="${role.id}">1</td>
+                        <td th:text="${role.name}">ROLE_USER</td>
+                        <td th:text="${role.description}">Description</td>
+                        <td th:text="${#temporals.format(role.createdAt, 'yyyy-MM-dd HH:mm')}">2024-01-01 12:00</td>
+                        <td>
+                            <a th:href="@{/roles/{id}/edit(id=${role.id})}" class="btn btn-primary btn-small">Edit</a>
+                            <form th:action="@{/roles/{id}/delete(id=${role.id})}" method="post" style="display: inline;">
+                                <button type="submit" class="btn btn-danger btn-small"
+                                        onclick="return confirm('Are you sure you want to delete this role?')">
+                                    Delete
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

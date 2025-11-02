@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Page</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>User Management System</h1>
+            <div class="user-info">
+                Logged in as: <strong sec:authentication="name">User</strong>
+            </div>
+        </div>
+
+        <div class="navigation">
+            <ul>
+                <li><a th:href="@{/home}">Home</a></li>
+                <li sec:authorize="hasRole('ADMIN')"><a th:href="@{/users}">User Management</a></li>
+                <li sec:authorize="hasRole('ADMIN')"><a th:href="@{/roles}">Role Management</a></li>
+                <li><a th:href="@{/test}">Test Page</a></li>
+                <li>
+                    <form th:action="@{/logout}" method="post" style="display: inline;">
+                        <button type="submit" class="btn btn-secondary btn-small">Logout</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+
+        <div class="content">
+            <h2>Test Page - Authentication & Authorization</h2>
+
+            <div class="card">
+                <h3 class="card-title">Authentication Information</h3>
+                <table>
+                    <tr>
+                        <td><strong>Username:</strong></td>
+                        <td th:text="${username}">username</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Authenticated:</strong></td>
+                        <td th:text="${authenticated}">true</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Principal Type:</strong></td>
+                        <td th:text="${principal.class.simpleName}">UserDetails</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="card">
+                <h3 class="card-title">Authorities / Roles</h3>
+                <ul>
+                    <li th:each="authority : ${authorities}" th:text="${authority.authority}">ROLE</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h3 class="card-title">Authorization Tests</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Test</th>
+                            <th>Result</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Is Authenticated</td>
+                            <td sec:authorize="isAuthenticated()">
+                                <span style="color: green; font-weight: bold;">PASS</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Has ROLE_USER or ROLE_ADMIN</td>
+                            <td sec:authorize="hasAnyRole('USER', 'ADMIN')">
+                                <span style="color: green; font-weight: bold;">PASS</span>
+                            </td>
+                        </tr>
+                        <tr sec:authorize="hasRole('ADMIN')">
+                            <td>Has ROLE_ADMIN (Admin Only)</td>
+                            <td>
+                                <span style="color: green; font-weight: bold;">PASS - You are an Admin!</span>
+                            </td>
+                        </tr>
+                        <tr sec:authorize="!hasRole('ADMIN')">
+                            <td>Does NOT have ROLE_ADMIN</td>
+                            <td>
+                                <span style="color: orange; font-weight: bold;">You are not an Admin</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <h3 class="card-title">Access Control Examples</h3>
+                <p>Based on your roles, you have access to:</p>
+                <ul>
+                    <li>This Test Page (Requires: ROLE_USER or ROLE_ADMIN)</li>
+                    <li sec:authorize="hasRole('ADMIN')">User Management (Requires: ROLE_ADMIN)</li>
+                    <li sec:authorize="hasRole('ADMIN')">Role Management (Requires: ROLE_ADMIN)</li>
+                    <li sec:authorize="!hasRole('ADMIN')"><em>You don't have admin privileges</em></li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h3 class="card-title">Session Information</h3>
+                <p>Your session is active and properly authenticated.</p>
+                <p>This page demonstrates that the authorization system is working correctly.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
