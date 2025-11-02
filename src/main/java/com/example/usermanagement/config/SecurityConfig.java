@@ -3,6 +3,7 @@ package com.example.usermanagement.config;
 import com.example.usermanagement.service.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -16,6 +17,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
@@ -27,6 +29,9 @@ public class SecurityConfig {
 
     private final CustomUserDetailsService userDetailsService;
     private final SecurityProperties securityProperties;
+
+    @Autowired(required = false)
+    private ClientRegistrationRepository clientRegistrationRepository;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -51,6 +56,15 @@ public class SecurityConfig {
         log.info("Configuring security with auth mode: {}", securityProperties.getAuthMode());
 
         if (securityProperties.isKeycloakMode()) {
+            if (clientRegistrationRepository == null) {
+                log.error("Keycloak mode is enabled but OAuth2 client configuration is missing!");
+                log.error("Please run with: mvn spring-boot:run -Dspring-boot.run.profiles=keycloak");
+                log.error("OR change auth-mode to 'application' in application.yaml");
+                throw new IllegalStateException(
+                    "Keycloak mode requires OAuth2 client configuration. " +
+                    "Run with -Dspring.profiles.active=keycloak or change auth-mode to 'application'"
+                );
+            }
             return configureKeycloakSecurity(http);
         } else {
             return configureApplicationSecurity(http);
