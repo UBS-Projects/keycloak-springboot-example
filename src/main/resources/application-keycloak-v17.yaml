@@ -1,0 +1,70 @@
+# Keycloak Authentication Mode Configuration for Keycloak 17+
+# (Keycloak 17+ removed the /auth path)
+# To use this profile, run: mvn spring-boot:run -Dspring-boot.run.profiles=keycloak-v17
+
+spring:
+  application:
+    name: user-management-app
+
+  # Database Configuration
+  datasource:
+    url: jdbc:h2:mem:userdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+
+  h2:
+    console:
+      enabled: true
+
+  thymeleaf:
+    cache: false
+
+# Application Security Configuration
+app:
+  security:
+    auth-mode: keycloak  # Using Keycloak SSO
+
+# Keycloak Configuration (Version 17+)
+keycloak:
+  enabled: true
+  realm: user-management
+  auth-server-url: http://localhost:8080  # No /auth for Keycloak 17+
+  ssl-required: external
+  resource: user-management-app
+  credentials:
+    secret: your-client-secret-here
+  use-resource-role-mappings: true
+  bearer-only: false
+  public-client: false
+  principal-attribute: preferred_username
+
+# OAuth2 Client Configuration for Keycloak 17+
+spring.security.oauth2.client:
+  registration:
+    keycloak:
+      client-id: user-management-app
+      client-secret: your-client-secret-here
+      scope: openid, profile, email
+      authorization-grant-type: authorization_code
+      redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+  provider:
+    keycloak:
+      issuer-uri: http://localhost:8080/realms/user-management  # No /auth
+      user-name-attribute: preferred_username
+
+# Server Configuration
+server:
+  port: 8081
+
+# Logging
+logging:
+  level:
+    com.example.usermanagement: DEBUG
+    org.springframework.security: DEBUG
+    org.keycloak: DEBUG
