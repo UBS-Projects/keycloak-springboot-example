@@ -41,34 +41,6 @@ app:
       secret: mySecretKeyForJWTTokenGenerationThatIsVeryLongAndSecure123456
       expiration: 86400000 # 24 hours in milliseconds
 
-# Keycloak Configuration (used when auth-mode: keycloak)
-keycloak:
-  enabled: false
-  realm: user-management
-  auth-server-url: http://localhost:8080/auth
-  ssl-required: external
-  resource: user-management-app
-  credentials:
-    secret: your-client-secret
-  use-resource-role-mappings: true
-  bearer-only: false
-  public-client: false
-  principal-attribute: preferred_username
-
-# OAuth2 Client Configuration for Keycloak
-spring.security.oauth2.client:
-  registration:
-    keycloak:
-      client-id: user-management-app
-      client-secret: your-client-secret
-      scope: openid, profile, email
-      authorization-grant-type: authorization_code
-      redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
-  provider:
-    keycloak:
-      issuer-uri: http://localhost:8080/auth/realms/user-management
-      user-name-attribute: preferred_username
-
 # Server Configuration
 server:
   port: 8081
