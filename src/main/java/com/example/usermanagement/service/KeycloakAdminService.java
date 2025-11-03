@@ -1,8 +1,9 @@
 package com.example.usermanagement.service;
 
-import com.example.usermanagement.config.SecurityProperties;
+import com.example.usermanagement.config.KeycloakAdminProperties;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
@@ -11,12 +12,10 @@ import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.admin.client.resource.UsersResource;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import jakarta.ws.rs.core.Response;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -25,23 +24,11 @@ import java.util.List;
  */
 @Service
 @ConditionalOnProperty(name = "app.security.auth-mode", havingValue = "keycloak")
+@RequiredArgsConstructor
 @Slf4j
 public class KeycloakAdminService {
 
-    @Value("${keycloak.admin.server-url}")
-    private String serverUrl;
-
-    @Value("${keycloak.admin.realm}")
-    private String realm;
-
-    @Value("${keycloak.admin.username}")
-    private String adminUsername;
-
-    @Value("${keycloak.admin.password}")
-    private String adminPassword;
-
-    @Value("${keycloak.admin.client-id}")
-    private String clientId;
+    private final KeycloakAdminProperties properties;
 
     private Keycloak keycloak;
     private RealmResource realmResource;
@@ -50,17 +37,18 @@ public class KeycloakAdminService {
     public void init() {
         try {
             log.info("Initializing Keycloak Admin Client...");
-            log.info("Server URL: {}, Realm: {}, Client ID: {}", serverUrl, realm, clientId);
+            log.info("Server URL: {}, Realm: {}, Client ID: {}",
+                    properties.getServerUrl(), properties.getRealm(), properties.getClientId());
 
             keycloak = KeycloakBuilder.builder()
-                    .serverUrl(serverUrl)
+                    .serverUrl(properties.getServerUrl())
                     .realm("master") // Use master realm for admin authentication
-                    .clientId(clientId)
-                    .username(adminUsername)
-                    .password(adminPassword)
+                    .clientId(properties.getClientId())
+                    .username(properties.getUsername())
+                    .password(properties.getPassword())
                     .build();
 
-            realmResource = keycloak.realm(realm);
+            realmResource = keycloak.realm(properties.getRealm());
             log.info("Keycloak Admin Client initialized successfully");
         } catch (Exception e) {
             log.error("Failed to initialize Keycloak Admin Client", e);
