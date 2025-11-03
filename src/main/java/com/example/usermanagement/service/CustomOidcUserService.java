@@ -71,7 +71,7 @@ public class CustomOidcUserService extends OidcUserService {
         // Find user in local database
         User user = userRepository.findByUsername(username).orElse(null);
 
-        if (user != null && user.isEnabled()) {
+        if (user != null && Boolean.TRUE.equals(user.getEnabled())) {
             // Convert user roles to Spring Security authorities
             authorities = user.getRoles().stream()
                     .map(role -> new SimpleGrantedAuthority(role.getName()))
@@ -80,7 +80,7 @@ public class CustomOidcUserService extends OidcUserService {
             log.debug("User '{}' found in local database with roles: {}",
                     username,
                     user.getRoles().stream().map(r -> r.getName()).collect(Collectors.toList()));
-        } else if (user != null && !user.isEnabled()) {
+        } else if (user != null && !Boolean.TRUE.equals(user.getEnabled())) {
             log.warn("User '{}' exists in local database but is disabled", username);
         } else {
             log.warn("User '{}' not found in local database", username);
