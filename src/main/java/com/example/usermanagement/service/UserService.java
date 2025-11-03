@@ -1,5 +1,6 @@
 package com.example.usermanagement.service;
 
+import com.example.usermanagement.config.SecurityProperties;
 import com.example.usermanagement.dto.UserDto;
 import com.example.usermanagement.entity.Role;
 import com.example.usermanagement.entity.User;
@@ -7,6 +8,7 @@ import com.example.usermanagement.repository.RoleRepository;
 import com.example.usermanagement.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +28,10 @@ public class UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final SecurityProperties securityProperties;
+
+    @Autowired(required = false)
+    private KeycloakAdminService keycloakAdminService;
 
     public List<UserDto> getAllUsers() {
         return userRepository.findAll().stream()
@@ -79,6 +85,24 @@ public class UserService {
 
         User savedUser = userRepository.save(user);
         log.info("Created user: {}", savedUser.getUsername());
+
+        // Sync with Keycloak if in Keycloak mode
+        if (securityProperties.isKeycloakMode() && keycloakAdminService != null) {
+            try {
+                keycloakAdminService.createUser(
+                        savedUser.getUsername(),
+                        savedUser.getEmail(),
+                        savedUser.getFirstName(),
+                        savedUser.getLastName(),
+                        userDto.getPassword()
+                );
+                log.info("User {} synced to Keycloak", savedUser.getUsername());
+            } catch (Exception e) {
+                log.error("Failed to sync user to Keycloak", e);
+                // Don't fail the transaction, user is created locally
+            }
+        }
+
         return convertToDto(savedUser);
     }
 
@@ -98,6 +122,7 @@ public class UserService {
             throw new RuntimeException("Email already exists");
         }
 
+        String oldUsername = user.getUsername();
         user.setUsername(userDto.getUsername());
         user.setEmail(userDto.getEmail());
         user.setFirstName(userDto.getFirstName());
@@ -105,12 +130,40 @@ public class UserService {
         user.setEnabled(userDto.getEnabled());
 
         // Update password only if provided
+        boolean passwordChanged = false;
         if (userDto.getPassword() != null && !userDto.getPassword().isEmpty()) {
             user.setPassword(passwordEncoder.encode(userDto.getPassword()));
+            passwordChanged = true;
         }
 
         User updatedUser = userRepository.save(user);
         log.info("Updated user: {}", updatedUser.getUsername());
+
+        // Sync with Keycloak if in Keycloak mode
+        if (securityProperties.isKeycloakMode() && keycloakAdminService != null) {
+            try {
+                keycloakAdminService.updateUser(
+                        oldUsername,  // Use old username to find user in Keycloak
+                        updatedUser.getEmail(),
+                        updatedUser.getFirstName(),
+                        updatedUser.getLastName()
+                );
+
+                // Update password if changed
+                if (passwordChanged) {
+                    keycloakAdminService.updateUserPassword(oldUsername, userDto.getPassword());
+                }
+
+                // Update enabled status
+                keycloakAdminService.setUserEnabled(updatedUser.getUsername(), updatedUser.getEnabled());
+
+                log.info("User {} synced to Keycloak", updatedUser.getUsername());
+            } catch (Exception e) {
+                log.error("Failed to sync user update to Keycloak", e);
+                // Don't fail the transaction
+            }
+        }
+
         return convertToDto(updatedUser);
     }
 
@@ -118,11 +171,24 @@ public class UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        String username = user.getUsername();
+
         // Remove user from all roles
         new HashSet<>(user.getRoles()).forEach(user::removeRole);
 
         userRepository.delete(user);
         log.info("Deleted user with id: {}", id);
+
+        // Sync with Keycloak if in Keycloak mode
+        if (securityProperties.isKeycloakMode() && keycloakAdminService != null) {
+            try {
+                keycloakAdminService.deleteUser(username);
+                log.info("User {} deleted from Keycloak", username);
+            } catch (Exception e) {
+                log.error("Failed to delete user from Keycloak", e);
+                // Don't fail the transaction
+            }
+        }
     }
 
     public UserDto assignRoleToUser(Long userId, Long roleId) {

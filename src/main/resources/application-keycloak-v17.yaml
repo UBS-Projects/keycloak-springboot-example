@@ -43,6 +43,13 @@ keycloak:
   bearer-only: false
   public-client: false
   principal-attribute: preferred_username
+  # Admin API credentials for user management synchronization
+  admin:
+    server-url: http://localhost:8080
+    realm: user-management
+    username: admin
+    password: admin
+    client-id: admin-cli
 
 # OAuth2 Client Configuration for Keycloak 17+
 spring.security.oauth2.client:
