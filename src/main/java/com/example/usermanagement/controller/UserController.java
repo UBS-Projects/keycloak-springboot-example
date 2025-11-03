@@ -34,6 +34,7 @@ public class UserController {
     public String showCreateForm(Model model) {
         model.addAttribute("user", new UserDto());
         model.addAttribute("roles", roleService.getAllRoles());
+        model.addAttribute("isEdit", false);
         return "users/form";
     }
 
@@ -44,6 +45,7 @@ public class UserController {
                              RedirectAttributes redirectAttributes) {
         if (result.hasErrors()) {
             model.addAttribute("roles", roleService.getAllRoles());
+            model.addAttribute("isEdit", false);
             return "users/form";
         }
 
@@ -56,6 +58,7 @@ public class UserController {
             log.error("Error creating user", e);
             model.addAttribute("errorMessage", e.getMessage());
             model.addAttribute("roles", roleService.getAllRoles());
+            model.addAttribute("isEdit", false);
             return "users/form";
         }
     }

@@ -31,6 +31,7 @@ public class RoleController {
     @GetMapping("/new")
     public String showCreateForm(Model model) {
         model.addAttribute("role", new RoleDto());
+        model.addAttribute("isEdit", false);
         return "roles/form";
     }
 
@@ -40,6 +41,7 @@ public class RoleController {
                              Model model,
                              RedirectAttributes redirectAttributes) {
         if (result.hasErrors()) {
+            model.addAttribute("isEdit", false);
             return "roles/form";
         }
 
@@ -51,6 +53,7 @@ public class RoleController {
         } catch (Exception e) {
             log.error("Error creating role", e);
             model.addAttribute("errorMessage", e.getMessage());
+            model.addAttribute("isEdit", false);
             return "roles/form";
         }
     }
