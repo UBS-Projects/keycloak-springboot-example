@@ -23,7 +23,7 @@ import java.util.List;
  * This service is only active when running in Keycloak mode
  */
 @Service
-@ConditionalOnProperty(name = "app.security.auth-mode", havingValue = "keycloak")
+@ConditionalOnProperty(name = "app.security.auth-mode", havingValue = "keycloak", matchIfMissing = false)
 @RequiredArgsConstructor
 @Slf4j
 public class KeycloakAdminService {
@@ -37,6 +37,16 @@ public class KeycloakAdminService {
     public void init() {
         try {
             log.info("Initializing Keycloak Admin Client...");
+
+            // Validate properties are not null
+            if (properties.getServerUrl() == null || properties.getServerUrl().isEmpty()) {
+                throw new IllegalStateException(
+                    "Keycloak Admin properties are not configured. " +
+                    "Please ensure you are running with the correct profile (e.g., -Dspring.profiles.active=keycloak-v17) " +
+                    "and that keycloak.admin.server-url is set in your configuration."
+                );
+            }
+
             log.info("Server URL: {}, Realm: {}, Client ID: {}",
                     properties.getServerUrl(), properties.getRealm(), properties.getClientId());
 
@@ -52,7 +62,7 @@ public class KeycloakAdminService {
             log.info("Keycloak Admin Client initialized successfully");
         } catch (Exception e) {
             log.error("Failed to initialize Keycloak Admin Client", e);
-            throw new RuntimeException("Failed to initialize Keycloak Admin Client", e);
+            throw new RuntimeException("Failed to initialize Keycloak Admin Client: " + e.getMessage(), e);
         }
     }
 

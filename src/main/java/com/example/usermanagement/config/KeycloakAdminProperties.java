@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 @ConfigurationProperties(prefix = "keycloak.admin")
-@ConditionalOnProperty(name = "app.security.auth-mode", havingValue = "keycloak")
+@ConditionalOnProperty(name = "app.security.auth-mode", havingValue = "keycloak", matchIfMissing = false)
 @Data
 public class KeycloakAdminProperties {
 
