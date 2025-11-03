@@ -80,6 +80,13 @@ public class UserController {
                              Model model,
                              RedirectAttributes redirectAttributes) {
         if (result.hasErrors()) {
+            // Reload user to get current roles (form doesn't submit roles)
+            UserDto existingUser = userService.getUserById(id)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            userDto.setRoles(existingUser.getRoles());
+            userDto.setId(id);
+
+            model.addAttribute("user", userDto);
             model.addAttribute("roles", roleService.getAllRoles());
             model.addAttribute("isEdit", true);
             return "users/form";
@@ -92,6 +99,14 @@ public class UserController {
             return "redirect:/users";
         } catch (Exception e) {
             log.error("Error updating user", e);
+
+            // Reload user to get current roles
+            UserDto existingUser = userService.getUserById(id)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            userDto.setRoles(existingUser.getRoles());
+            userDto.setId(id);
+
+            model.addAttribute("user", userDto);
             model.addAttribute("errorMessage", e.getMessage());
             model.addAttribute("roles", roleService.getAllRoles());
             model.addAttribute("isEdit", true);
