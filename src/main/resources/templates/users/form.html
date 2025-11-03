@@ -45,8 +45,10 @@
                            id="username"
                            th:field="*{username}"
                            class="form-control"
+                           th:readonly="${isEdit}"
                            required>
                     <div class="form-error" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></div>
+                    <small class="form-text" th:if="${isEdit}">Username cannot be changed after creation</small>
                 </div>
 
                 <div class="form-group">

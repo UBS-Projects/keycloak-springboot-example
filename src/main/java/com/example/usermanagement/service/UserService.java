@@ -110,11 +110,8 @@ public class UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Check username uniqueness if changed
-        if (!user.getUsername().equals(userDto.getUsername()) &&
-                userRepository.existsByUsername(userDto.getUsername())) {
-            throw new RuntimeException("Username already exists");
-        }
+        // Username cannot be changed - it's the identifier linking local DB and Keycloak
+        String username = user.getUsername();
 
         // Check email uniqueness if changed
         if (!user.getEmail().equals(userDto.getEmail()) &&
@@ -122,8 +119,7 @@ public class UserService {
             throw new RuntimeException("Email already exists");
         }
 
-        String oldUsername = user.getUsername();
-        user.setUsername(userDto.getUsername());
+        // Update user fields (NOT username - it's immutable)
         user.setEmail(userDto.getEmail());
         user.setFirstName(userDto.getFirstName());
         user.setLastName(userDto.getLastName());
@@ -143,7 +139,7 @@ public class UserService {
         if (securityProperties.isKeycloakMode() && keycloakAdminService != null) {
             try {
                 keycloakAdminService.updateUser(
-                        oldUsername,  // Use old username to find user in Keycloak
+                        username,  // Username is immutable
                         updatedUser.getEmail(),
                         updatedUser.getFirstName(),
                         updatedUser.getLastName()
@@ -151,11 +147,11 @@ public class UserService {
 
                 // Update password if changed
                 if (passwordChanged) {
-                    keycloakAdminService.updateUserPassword(oldUsername, userDto.getPassword());
+                    keycloakAdminService.updateUserPassword(username, userDto.getPassword());
                 }
 
                 // Update enabled status
-                keycloakAdminService.setUserEnabled(updatedUser.getUsername(), updatedUser.getEnabled());
+                keycloakAdminService.setUserEnabled(username, updatedUser.getEnabled());
 
                 log.info("User {} synced to Keycloak", updatedUser.getUsername());
             } catch (Exception e) {
