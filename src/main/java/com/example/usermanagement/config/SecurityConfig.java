@@ -1,5 +1,6 @@
 package com.example.usermanagement.config;
 
+import com.example.usermanagement.service.CustomOidcUserService;
 import com.example.usermanagement.service.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +33,12 @@ public class SecurityConfig {
 
     @Autowired(required = false)
     private ClientRegistrationRepository clientRegistrationRepository;
+
+    @Autowired(required = false)
+    private CustomOidcUserService customOidcUserService;
+
+    @Autowired(required = false)
+    private KeycloakLogoutHandler keycloakLogoutHandler;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -110,7 +117,7 @@ public class SecurityConfig {
     }
 
     private SecurityFilterChain configureKeycloakSecurity(HttpSecurity http) throws Exception {
-        log.info("Configuring Keycloak SSO authentication");
+        log.info("Configuring Keycloak SSO authentication with local authorization");
 
         http
                 .csrf(AbstractHttpConfigurer::disable)
@@ -120,17 +127,32 @@ public class SecurityConfig {
                         .requestMatchers("/test").hasAnyRole("USER", "ADMIN")
                         .anyRequest().authenticated()
                 )
-                .oauth2Login(oauth2 -> oauth2
-                        .loginPage("/oauth2/authorization/keycloak")
-                        .defaultSuccessUrl("/home", true)
-                        .failureUrl("/login?error=true")
-                )
-                .logout(logout -> logout
-                        .logoutUrl("/logout")
-                        .logoutSuccessUrl("/")
-                        .invalidateHttpSession(true)
-                        .deleteCookies("JSESSIONID")
-                );
+                .oauth2Login(oauth2 -> {
+                    oauth2
+                            .loginPage("/oauth2/authorization/keycloak")
+                            .defaultSuccessUrl("/home", true)
+                            .failureUrl("/login?error=true");
+
+                    // Use custom OIDC user service to load authorities from local database
+                    if (customOidcUserService != null) {
+                        oauth2.userInfoEndpoint(userInfo ->
+                                userInfo.oidcUserService(customOidcUserService));
+                        log.info("Using CustomOidcUserService for loading local user authorities");
+                    }
+                })
+                .logout(logout -> {
+                    logout
+                            .logoutUrl("/logout")
+                            .logoutSuccessUrl("/")
+                            .invalidateHttpSession(true)
+                            .deleteCookies("JSESSIONID");
+
+                    // Add custom logout handler to logout from Keycloak
+                    if (keycloakLogoutHandler != null) {
+                        logout.addLogoutHandler(keycloakLogoutHandler);
+                        log.info("Using KeycloakLogoutHandler for proper SSO logout");
+                    }
+                });
 
         return http.build();
     }

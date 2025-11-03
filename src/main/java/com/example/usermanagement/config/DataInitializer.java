@@ -24,12 +24,13 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        // Only initialize data in application mode
         if (securityProperties.isApplicationMode()) {
             log.info("Initializing test data for application authentication mode...");
             initializeData();
         } else {
-            log.info("Keycloak mode enabled - skipping local data initialization");
+            log.info("Keycloak SSO mode enabled - initializing local users for authorization");
+            log.info("Note: Authentication via Keycloak, Authorization via local database");
+            initializeData();
         }
     }
 
