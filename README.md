@@ -62,65 +62,273 @@ cd keycloak-springboot-example
 mvn clean install
 ```
 
-### 3. Run the Application
+### 3. Choose Your Authentication Mode
+
+This application supports **TWO authentication modes**:
+
+#### **Mode 1: Application Mode** (Simple, No Keycloak Required) ⚡
+- Form-based login with username/password
+- Perfect for development and testing
+- **No external dependencies**
+
+#### **Mode 2: Keycloak Mode** (Enterprise SSO) 🔐
+- OAuth2/OIDC integration with Keycloak
+- Single Sign-On (SSO) authentication
+- Automatic user synchronization
+- **Requires Keycloak server running**
+
+---
+
+## Running Mode 1: Application Mode (No Keycloak)
+
+**Use this mode when you don't have Keycloak or want simple authentication.**
+
+### Run from Command Line
 
 ```bash
+# Navigate to project directory
+cd keycloak-springboot-example
+
+# Run with default configuration (Application Mode)
 mvn spring-boot:run
 ```
 
-The application will start on `http://localhost:8081`
+### Run from IntelliJ IDEA
 
-### 4. Access the Application
+**Method 1: Quick Run**
+1. Open `UserManagementApplication.java`
+2. Right-click → "Run 'UserManagementApplication'"
+3. Done! ✅
 
-Open your browser and navigate to: `http://localhost:8081`
+**Method 2: Create Run Configuration**
+1. Go to: Run → Edit Configurations...
+2. Click: + → Spring Boot
+3. Configure:
+   - **Name**: User Management - Application Mode
+   - **Main class**: `com.example.usermanagement.UserManagementApplication`
+   - **Active profiles**: (leave empty)
+4. Click: Apply → OK
+5. Run the configuration
+
+### Access the Application
+
+```
+URL: http://localhost:8081
+```
+
+### Test Login
+
+| Username | Password | Role |
+|----------|----------|------|
+| admin | admin123 | ROLE_ADMIN |
+| user | user123 | ROLE_USER |
+| moderator | mod123 | ROLE_MODERATOR, ROLE_USER |
+
+**Login Flow:**
+1. Go to http://localhost:8081
+2. Click "Login"
+3. Enter username and password
+4. Click "Sign In"
+5. You're logged in! ✅
+
+---
+
+## Running Mode 2: Keycloak Mode (With SSO)
+
+**Use this mode for enterprise SSO authentication with Keycloak.**
+
+### Prerequisites
+
+#### 1. Keycloak Must Be Running
+
+**Check your Keycloak version:**
+
+**For Keycloak 17+ (newer versions):**
+- Test this URL: `http://localhost:8080/realms/master/.well-known/openid-configuration`
+- If it returns JSON → You have Keycloak 17+ ✅
+
+**For Keycloak 16 and earlier:**
+- Test this URL: `http://localhost:8080/auth/realms/master/.well-known/openid-configuration`
+- If it returns JSON → You have Keycloak 16- ✅
+
+#### 2. Import the Realm
+
+**Before first run, import the realm configuration:**
+
+1. **Open Keycloak Admin Console:**
+   - Keycloak 17+: http://localhost:8080/admin
+   - Keycloak 16-: http://localhost:8080/auth/admin
+
+2. **Login** with your Keycloak admin credentials
+
+3. **Import Realm:**
+   - Click the realm dropdown (top-left, shows "master")
+   - Click "Create Realm"
+   - Click "Browse" → Select `keycloak-realm-export.json` from project root
+   - Click "Create"
+
+4. **Verify:** Realm "user-management" should appear in the dropdown ✅
+
+### Run from Command Line
+
+**For Keycloak 17+ (No /auth path):**
+```bash
+mvn spring-boot:run -Dspring-boot.run.profiles=keycloak-v17
+```
+
+**For Keycloak 16- (With /auth path):**
+```bash
+mvn spring-boot:run -Dspring-boot.run.profiles=keycloak
+```
+
+### Run from IntelliJ IDEA
+
+**Step-by-Step Configuration:**
+
+1. **Open:** Run → Edit Configurations...
+
+2. **Create New Configuration:**
+   - Click: + → Spring Boot
+   - Name: **User Management - Keycloak Mode**
+   - Main class: `com.example.usermanagement.UserManagementApplication`
+   - **Active profiles**: `keycloak-v17` (or `keycloak` for older versions)
+   - Module: user-management
+
+3. **Alternative - Using VM Options:**
+   - Click: "Modify options" → "Add VM options"
+   - Enter: `-Dspring.profiles.active=keycloak-v17`
+
+4. **Click:** Apply → OK
+
+5. **Run:** Select the configuration and press Run button ▶️
+
+### Access the Application
+
+```
+URL: http://localhost:8081
+```
+
+### Test Login
+
+**Same test users, but authenticated via Keycloak:**
+
+| Username | Password | Role |
+|----------|----------|------|
+| admin | admin123 | ROLE_ADMIN |
+| user | user123 | ROLE_USER |
+| moderator | mod123 | ROLE_MODERATOR, ROLE_USER |
+
+**Login Flow:**
+1. Go to http://localhost:8081
+2. Click "Login"
+3. **Redirected to Keycloak** login page
+4. Enter Keycloak username and password
+5. **Redirected back** to application
+6. You're logged in via SSO! ✅
+
+### What Happens Behind the Scenes
+
+In Keycloak Mode:
+- ✅ **Authentication**: Handled by Keycloak (OAuth2/OIDC)
+- ✅ **Authorization**: Roles loaded from local database
+- ✅ **User Create**: Creates in both local database AND Keycloak
+- ✅ **User Update**: Updates in both local database AND Keycloak
+- ✅ **User Delete**: Deletes from both local database AND Keycloak
+- ✅ **Logout**: Clears both application AND Keycloak sessions
+
+---
 
 ## Test Users
 
-The application comes pre-configured with test users:
+The application comes pre-configured with test users (available in both modes):
 
 | Username  | Password    | Role           | Description                    |
 |-----------|-------------|----------------|--------------------------------|
 | admin     | admin123    | ROLE_ADMIN     | Full access to all features    |
 | user      | user123     | ROLE_USER      | Standard user access           |
-| moderator | mod123      | ROLE_MODERATOR | Elevated permissions           |
+| moderator | mod123      | ROLE_MODERATOR, ROLE_USER | Elevated permissions |
 | john.doe  | password123 | ROLE_USER      | Test user                      |
 | jane.smith| password123 | ROLE_USER      | Test user                      |
 
-## Authentication Modes
+**In Application Mode:** Users stored in local database only
+**In Keycloak Mode:** Users stored in both local database and Keycloak
 
-### Application-Based Authentication (Default)
+---
 
-This mode uses the application's database for authentication.
+## Authentication Modes Comparison
 
-**Configuration** (`application.yaml`):
-```yaml
-app:
-  security:
-    auth-mode: application
+| Feature | Application Mode | Keycloak Mode |
+|---------|-----------------|---------------|
+| **Authentication** | Form login (local) | Keycloak SSO (OAuth2) |
+| **Authorization** | Local database roles | Local database roles |
+| **User Management** | Via application UI | Via application UI + syncs to Keycloak |
+| **User Storage** | Local database only | Local database + Keycloak |
+| **Password Validation** | Local (BCrypt) | Keycloak |
+| **Keycloak Required?** | ❌ No | ✅ Yes |
+| **Logout** | Clears local session | Clears local + Keycloak sessions |
+| **Best For** | Development, Testing | Production, Enterprise SSO |
+
+---
+
+## Switching Between Modes
+
+### Stop Current Application
+- IntelliJ: Stop button or Ctrl+F2
+- Command line: Ctrl+C
+
+### Switch to Application Mode
+```bash
+mvn spring-boot:run
+# OR in IntelliJ: Select "Application Mode" configuration
 ```
 
-### Keycloak SSO Authentication
+### Switch to Keycloak Mode
+```bash
+mvn spring-boot:run -Dspring-boot.run.profiles=keycloak-v17
+# OR in IntelliJ: Select "Keycloak Mode" configuration
+```
 
-This mode integrates with Keycloak for Single Sign-On.
+---
 
-**Configuration** (`application.yaml`):
+## Configuration Files
+
+### Application Mode Configuration
+**File:** `src/main/resources/application.yaml`
+
 ```yaml
 app:
   security:
-    auth-mode: keycloak
+    auth-mode: application  # Uses form-based authentication
+```
+
+### Keycloak Mode Configuration
+
+**For Keycloak 17+:**
+**File:** `src/main/resources/application-keycloak-v17.yaml`
+
+```yaml
+app:
+  security:
+    auth-mode: keycloak  # Uses Keycloak SSO
+
+spring.security.oauth2.client:
+  provider:
+    keycloak:
+      issuer-uri: http://localhost:8080/realms/user-management  # No /auth
 
 keycloak:
-  enabled: true
+  auth-server-url: http://localhost:8080  # No /auth
   realm: user-management
-  auth-server-url: http://localhost:8080/auth
-  resource: user-management-app
-  credentials:
-    secret: your-client-secret
+  admin:
+    server-url: http://localhost:8080
+    realm: user-management
+    username: admin  # Your Keycloak admin username
+    password: admin  # Your Keycloak admin password
 ```
 
-To switch modes:
-1. Update the `auth-mode` property in `application.yaml`
-2. Restart the application
+**For Keycloak 16-:**
+**File:** `src/main/resources/application-keycloak.yaml`
+*(Same as above but with /auth in all URLs)*
 
 ## Available Pages
 
